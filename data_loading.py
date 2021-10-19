@@ -1,5 +1,6 @@
 from imutils import paths
 import cv2
+import os
 
 
 
@@ -16,6 +17,9 @@ Modifying contents of list arguments will modify them outside of the function's 
 
 
 def load_bubble_images(data, labels, datapath):
+
+    #print('LOAD_BUBBLE_IMAGES CALLED')
+
     # Retrieve image paths
     image_paths = sorted(list(paths.list_images(datapath)))
 
@@ -28,11 +32,19 @@ def load_bubble_images(data, labels, datapath):
         # Since these images have not been flattened (I believe we should avoid flattening for CNNs?),
         # each image is effectively 631x3840x3=7,269,120 pixels
         # For reference, the images used in the DeepBoiling model were 224x224x3=150,528 pixels
-        image = cv2.resize(image, (631, 3840))
+
+        # Diving each parameter by 6 to maintain a relatively similar aspect ratio
+        image = cv2.resize(image, (106, 640))
         data.append(image)
 
         # Since the directory format will likely have separate folders for CHF and nonCHF classes, we should probably
         # source the label information from the path itself
+
+        # -2 index will take the name of the directory directly above the image
+        label = image_path.split(os.path.sep)[-2]
+        labels.append(label)
+
+
 
 
 
