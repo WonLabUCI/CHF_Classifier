@@ -1,6 +1,7 @@
 from imutils import paths
 import cv2
 import os
+import random
 
 
 
@@ -22,6 +23,8 @@ def load_bubble_images(data, labels, datapath):
 
     # Retrieve image paths
     image_paths = sorted(list(paths.list_images(datapath)))
+    random.seed(100)
+    random.shuffle(image_paths)
 
     # pyimagesearch data loading suggests shuffling data, not sure how important this is. Look into it
 
