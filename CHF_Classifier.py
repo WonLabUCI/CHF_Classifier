@@ -5,7 +5,7 @@
 # Since this package seems to be fairly uncommon (written and published by Adrian Rosebrock),
 # I decided to include it in the root directory to avoid adding another dependency
 
-# RUN COMMAND: python CHF_Classifier.py -d input_data -m output\cnn.model -l output\lb.pickle -p output\plot.png
+# RUN COMMAND: python CHF_Classifier.py -d input_data -m output\cnn.h5 -l output\lb.pickle -p output\plot.png
 
 # Import packages
 import matplotlib
@@ -16,6 +16,8 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+from tensorflow.compat.v1 import ConfigProto
+from tensorflow.compat.v1 import Session
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout, Activation, BatchNormalization
 from tensorflow.keras.utils import to_categorical
@@ -29,6 +31,11 @@ import argparse
 import random
 import pickle
 import data_loading
+import time
+
+config = ConfigProto()
+config.gpu_options.allow_growth = True
+session = Session(config=config)
 
 ap = argparse.ArgumentParser()
 ap.add_argument('-d', '--dataset', required=True, help='path to input dataset of images')
@@ -89,34 +96,40 @@ trainY = to_categorical(trainY, num_classes=2)
 '''
 
 
-aug = ImageDataGenerator(horizontal_flip=True, fill_mode='nearest')
+aug = ImageDataGenerator(horizontal_flip=False, fill_mode='nearest')
 
 model = Sequential()
 
+# 32 filters
 model.add(Conv2D(32, (3,3), padding='same', input_shape=image_shape))
 model.add(Activation('relu'))
-model.add(BatchNormalization(axis=-1))
+#model.add(BatchNormalization(axis=-1))
 model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.25))
+#odel.add(Dropout(0.25))
 
+
+# 32 filters
 model.add(Conv2D(32, (3,3), padding='same', input_shape=image_shape))
 model.add(Activation('relu'))
-model.add(BatchNormalization(axis=-1))
+#model.add(BatchNormalization(axis=-1))
 model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Dropout(0.25))
+#model.add(Dropout(0.25))
 
+
+'''
 model.add(Conv2D(64, (3,3), padding='same', input_shape=image_shape))
 model.add(Activation('relu'))
-model.add(BatchNormalization(axis=-1))
+#model.add(BatchNormalization(axis=-1))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Dropout(0.25))
+'''
+
 
 model.add(Flatten())
-model.add(Dense(64))
+model.add(Dense(32))
 model.add(Activation('relu'))
-model.add(BatchNormalization(axis=-1))
+#model.add(BatchNormalization(axis=-1))
 model.add(Dropout(0.5))
-
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
@@ -133,14 +146,20 @@ model.compile(loss='binary_crossentropy',
               optimizer=opt,
               metrics=['accuracy'])
 
+# Set timer for training
+timer_start = time.perf_counter()
+
 H = model.fit(x=aug.flow(trainX, trainY, batch_size=batch_size), validation_data=(testX,testY),
                 steps_per_epoch=len(trainX)//batch_size, epochs=num_epochs)
 
+timer_end = time.perf_counter()
+
 print('[INFO] Evaluating network')
 predictions = model.predict(x=testX, batch_size=32)
-print(predictions)
+#print(predictions)
 print(classification_report(testY.argmax(axis=1), predictions.argmax(axis=1),
                             target_names=lb.classes_, labels=[0,1]))
+print(f'Total time elapsed for training: {timer_end-timer_start:0.4f} seconds')
 
 # Plot training loss and accuracy
 print('[INFO] Plotting training statistics')
@@ -163,6 +182,8 @@ model.save(args['model'], save_format='h5')
 f = open(args['label_bin'], 'wb')
 f.write(pickle.dumps(lb))
 f.close()
+
+
 
 
 

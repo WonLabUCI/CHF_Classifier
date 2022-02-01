@@ -19,25 +19,19 @@ Modifying contents of list arguments will modify them outside of the function's 
 
 def load_bubble_images(data, labels, datapath):
 
-    #print('LOAD_BUBBLE_IMAGES CALLED')
-
     # Retrieve image paths
     image_paths = sorted(list(paths.list_images(datapath)))
     random.seed(100)
     random.shuffle(image_paths)
 
-    # pyimagesearch data loading suggests shuffling data, not sure how important this is. Look into it
-
     for image_path in image_paths:
         image = cv2.imread(image_path)
 
-        # Pretty sure these dimensions are kind of HUGE, even if it's going to be downscaled
-        # Since these images have not been flattened (I believe we should avoid flattening for CNNs?),
-        # each image is effectively 631x3840x3=7,269,120 pixels
-        # For reference, the images used in the DeepBoiling model were 224x224x3=150,528 pixels
-
         # Diving each parameter by 6 to maintain a relatively similar aspect ratio
-        image = cv2.resize(image, (106, 640))
+        # CV2 USES SHAPE (Width, Height)
+        #image = cv2.resize(image, (106, 640))
+        image = cv2.resize(image, (224,224))
+        #image = cv2.resize(image, (448, 448))
         data.append(image)
 
         # Since the directory format will likely have separate folders for CHF and nonCHF classes, we should probably
@@ -48,6 +42,14 @@ def load_bubble_images(data, labels, datapath):
         labels.append(label)
 
 
+
+
+if __name__ == '__main__':
+    data = []
+    labels = []
+    load_bubble_images(data, labels, 'bubble_data')
+
+    cv2.imwrite('test.png', data[0])
 
 
 
